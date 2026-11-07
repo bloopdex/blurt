@@ -51,15 +51,8 @@ jobs:
 
       - name: Build installers
         run: pnpm tauri build --target ${{ matrix.target }}
-        env:
-          # macOS signing/notarization: set these repository secrets to produce a signed, notarized DMG.
-          # Without them the build still succeeds but the app is unsigned (see docs/DISTRIBUTION.md).
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        # Apple signing: add the APPLE_* secrets and pass them here as env once a certificate exists.
+        # Empty values make the bundler try (and fail) to sign, so they are not passed until then.
 
       - uses: actions/upload-artifact@v4
         with:
