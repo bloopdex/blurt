@@ -18,15 +18,8 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-          # macOS has never been run end to end: these builds are informational and can't fail CI.
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            experimental: true
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            experimental: true
+          # macOS joins CI again once it has been verified on real hardware (docs/RELEASING.md).
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental == true }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -46,7 +39,6 @@ jobs:
       - name: Typecheck & frontend tests
         run: pnpm typecheck && pnpm test
       - name: Rust tests (hardware tests are #[ignore]d — CI runners have no audio devices)
-        if: matrix.target != 'x86_64-apple-darwin'
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
       - name: Build installers
