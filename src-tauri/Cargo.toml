@@ -1,6 +1,6 @@
 [package]
 name = "blurt"
-version = "0.4.0"
+version = "0.4.1"
 description = "Blurt — a soundboard that plays straight into your microphone"
 authors = ["Mohammed Rami Benhamida"]
 license = "MIT"

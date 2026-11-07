@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.1] - 2026-11-07
+
+- **Repository and website:** the source is on GitHub, and the landing page links to it. Each release publishes its installer and checksums there.
+- **Windows only for now:** macOS builds are paused until they have been tested on a Mac. The app itself is unchanged from 0.4.0.
+
 ## [0.4.0] - 2026-11-07
 
 New **Settings → Stream & game** tab. Everything here is off until you turn it on.
