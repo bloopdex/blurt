@@ -74,7 +74,8 @@ describe("format", () => {
   it("formats durations and shortcuts", () => {
     expect(formatDuration(1500)).toBe("1.5s");
     expect(formatDuration(75_000)).toBe("1:15");
-    expect(shortcutParts("control+alt+Digit1").slice(1)).toEqual(["Alt", "1"]);
+    // Labels follow the OS the test runs on (⌥ on macOS).
+    expect(shortcutParts("control+alt+Digit1").slice(1)).toEqual([/Mac/i.test(navigator.platform) ? "⌥" : "Alt", "1"]);
     const base = { ctrlKey: true, altKey: true, shiftKey: false, metaKey: false };
     expect(eventToAccelerator({ ...base, key: "1", code: "Digit1" })).toBe("Control+Alt+Digit1");
     expect(eventToAccelerator({ ...base, key: "Control", code: "ControlLeft" })).toBeNull();
