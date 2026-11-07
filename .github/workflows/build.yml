@@ -1,0 +1,71 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          # macOS has never been run end to end: these builds are informational and can't fail CI.
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            experimental: true
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            experimental: true
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental == true }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: ${{ matrix.target }}
+
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck & frontend tests
+        run: pnpm typecheck && pnpm test
+      - name: Rust tests (hardware tests are #[ignore]d — CI runners have no audio devices)
+        if: matrix.target != 'x86_64-apple-darwin'
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+      - name: Build installers
+        run: pnpm tauri build --target ${{ matrix.target }}
+        env:
+          # macOS signing/notarization: set these repository secrets to produce a signed, notarized DMG.
+          # Without them the build still succeeds but the app is unsigned (see docs/DISTRIBUTION.md).
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blurt-${{ matrix.target }}
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+          if-no-files-found: error

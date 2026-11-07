@@ -1,0 +1,109 @@
+name: Release
+
+# Push a tag like v0.4.0 (matching src-tauri/tauri.conf.json) to build the Windows installers,
+# publish a GitHub Release with them and SHA256SUMS.txt, and deploy the landing page (site/) to
+# GitHub Pages with that release's version, sizes and checksums.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          # macOS joins the release once it has been verified on real hardware (docs/RELEASING.md).
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag must match the app version
+        shell: bash
+        run: |
+          v="v$(node -p "require('./src-tauri/tauri.conf.json').version")"
+          [ "$v" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME != app version $v"; exit 1; }
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: release-${{ matrix.target }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck && pnpm test
+      - run: cargo test --manifest-path src-tauri/Cargo.toml
+      - name: Build installers
+        run: pnpm tauri build --target ${{ matrix.target }}
+      - name: Collect, verify format, name consistently (also writes site/release.js)
+        run: node scripts/package.mjs --target ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: dist/Blurt-*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-release-${{ matrix.target }}
+          path: site/release.js
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+      - name: Checksums
+        run: cd dist && sha256sum Blurt-* > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Release notes from CHANGELOG.md
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          awk -v v="$v" '/^## \[/{p = index($0, "[" v "]") > 0; next} p' CHANGELOG.md > notes.md
+          cat >> notes.md <<'EOF'
+
+          ---
+          **Download:** `Blurt-Setup.exe` (Windows 10/11, 64-bit). The installer isn't code-signed yet, so SmartScreen asks you to confirm: *More info → Run anyway*.
+          Verify downloads with `sha256sum -c SHA256SUMS.txt`, or `Get-FileHash Blurt-Setup.exe` in PowerShell.
+          EOF
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "Blurt $GITHUB_REF_NAME" --notes-file notes.md --latest
+
+  pages:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release data for the download buttons (written by package.mjs in the Windows job)
+        uses: actions/download-artifact@v4
+        with:
+          name: site-release-x86_64-pc-windows-msvc
+          path: site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

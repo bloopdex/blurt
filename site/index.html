@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blurt — the free soundboard that plays straight into your mic</title>
+    <meta name="description" content="Blurt is a free Windows soundboard for gamers and creators. Play sounds into Discord, Valorant, Zoom or OBS with hotkeys, an in-game overlay, auto push-to-talk, instant clips and Stream Deck control." />
+    <meta name="theme-color" content="#0d0e11" />
+    <meta property="og:title" content="Blurt — the soundboard that plays straight into your mic" />
+    <meta property="og:description" content="Hotkeys, an in-game overlay, auto push-to-talk, instant clips and Stream Deck control. Free for Windows." />
+    <meta property="og:image" content="assets/library.jpg" />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="logo.svg" />
+    <link rel="preload" href="assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <style>
+      @font-face { font-family: "Bricolage"; src: url("assets/fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+      @font-face { font-family: "Inter"; src: url("assets/fonts/inter-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+      :root {
+        --ink: #0d0e11; --ink-2: #111318; --surface: #15171c; --surface-2: #1c1f26; --border: #262a33; --border-2: #323743;
+        --text: #ecedef; --muted: #9096a3; --dim: #6b7180; --coral: #ff5b3a; --coral-2: #ff7a5c; --lime: #b8f04a; --amber: #f5b83d; --violet: #8b6cff;
+        --radius: 18px;
+      }
+      * { box-sizing: border-box; }
+      html { background: var(--ink); color: var(--text); font: 16px/1.6 Inter, "Segoe UI", system-ui, sans-serif; scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+      body { margin: 0; overflow-x: hidden; }
+      a { color: inherit; }
+      img { max-width: 100%; height: auto; display: block; }
+      h1, h2, h3, .display { font-family: Bricolage, Inter, sans-serif; letter-spacing: -0.03em; text-wrap: balance; }
+      .lede { text-wrap: pretty; }
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+      .muted { color: var(--muted); }
+      :focus-visible { outline: 3px solid color-mix(in oklab, var(--coral) 70%, transparent); outline-offset: 3px; border-radius: 8px; }
+
+      /* Nav */
+      .nav { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(14px); background: color-mix(in oklab, var(--ink) 78%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent); }
+      .nav .wrap { display: flex; align-items: center; gap: 28px; height: 64px; }
+      .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: Bricolage, sans-serif; font-weight: 800; font-size: 23px; letter-spacing: -0.04em; }
+      .nav nav { display: flex; gap: 24px; margin-left: auto; font-size: 14px; }
+      .nav nav a { color: var(--muted); text-decoration: none; }
+      .nav nav a:hover { color: var(--text); }
+
+      /* Buttons */
+      .btn { display: inline-flex; align-items: center; gap: 12px; padding: 13px 22px; border-radius: 14px; font-weight: 700; text-decoration: none; border: 1px solid transparent; font-size: 16px; transition: transform .15s, filter .15s, background .15s; }
+      .btn small { display: block; font-weight: 500; font-size: 12px; opacity: .78; margin-top: 1px; }
+      .btn .lines { line-height: 1.25; text-align: left; }
+      .btn.primary { background: var(--coral); color: #1d0b05; box-shadow: 0 10px 40px -10px color-mix(in oklab, var(--coral) 70%, transparent); }
+      .btn.primary:hover { filter: brightness(1.07); transform: translateY(-1px); }
+      .btn.secondary { background: var(--surface-2); border-color: var(--border); }
+      .btn.secondary:hover { background: #22262e; }
+      .btn.sm { padding: 8px 14px; font-size: 14px; border-radius: 10px; }
+      .btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; pointer-events: none; box-shadow: none; }
+
+      /* Hero */
+      .hero { position: relative; padding: 72px 0 40px; text-align: center; }
+      .hero::before { content: ""; position: absolute; inset: -120px 0 auto; height: 720px; z-index: -1;
+        background: radial-gradient(600px 320px at 50% 18%, color-mix(in oklab, var(--coral) 26%, transparent), transparent 70%),
+                    radial-gradient(520px 300px at 85% 40%, color-mix(in oklab, var(--violet) 16%, transparent), transparent 70%),
+                    radial-gradient(520px 300px at 12% 46%, color-mix(in oklab, var(--lime) 8%, transparent), transparent 70%); }
+      .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: 13px; color: var(--muted); text-decoration: none; }
+      .pill b { white-space: nowrap; background: color-mix(in oklab, var(--lime) 18%, transparent); color: var(--lime); border-radius: 999px; padding: 2px 9px; font-size: 12px; }
+      .hero h1 { font-size: clamp(42px, 7vw, 84px); line-height: .98; margin: 22px auto 22px; max-width: 900px; font-weight: 800; }
+      .hero h1 em { font-style: normal; background: linear-gradient(100deg, var(--coral), #ff9a5c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+      .lede { font-size: clamp(17px, 2vw, 20px); color: var(--muted); max-width: 680px; margin: 0 auto 34px; }
+      .cta { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
+      .trust { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 22px; margin-top: 22px; font-size: 14px; color: var(--muted); padding: 0; list-style: none; }
+      .trust li { display: flex; align-items: center; gap: 7px; }
+      .trust svg { color: var(--lime); }
+
+      /* Product shot */
+      .stage { position: relative; margin: 64px auto 0; max-width: 1100px; }
+      .window { border-radius: 16px; overflow: hidden; border: 1px solid var(--border-2); background: var(--ink-2); box-shadow: 0 40px 120px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.02) inset; }
+      .window .bar { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; background: #121419; border-bottom: 1px solid var(--border); }
+      .window .bar i { width: 11px; height: 11px; border-radius: 50%; background: #2a2e37; }
+      .window .bar span { margin-left: auto; margin-right: auto; font-size: 12px; color: var(--dim); transform: translateX(-24px); }
+      .stage .float { position: absolute; width: 42%; right: -5%; bottom: -9%; filter: drop-shadow(0 30px 60px rgba(0,0,0,.7)); border-radius: 18px; }
+      .stage .float figcaption { position: absolute; top: -34px; right: 8px; font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); padding: 4px 10px; border-radius: 999px; }
+
+      /* Sections */
+      section { padding: 110px 0 0; }
+      .eyebrow { color: var(--coral); font-weight: 700; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; }
+      h2 { font-size: clamp(32px, 4.4vw, 52px); line-height: 1.04; margin: 12px 0 16px; font-weight: 800; }
+      .center { text-align: center; }
+      .center .lede { margin-bottom: 0; }
+
+      .apps { margin-top: 70px; text-align: center; }
+      .apps p { font-size: 13px; color: var(--dim); letter-spacing: .08em; text-transform: uppercase; margin: 0 0 16px; }
+      .apps ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 34px; padding: 0; margin: 0; list-style: none; font-family: Bricolage, sans-serif; font-weight: 700; font-size: 21px; color: #b9bdc7; }
+
+      .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 52px; }
+      .feature { background: linear-gradient(180deg, var(--surface), var(--ink-2)); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; transition: border-color .2s, transform .2s; }
+      .feature:hover { border-color: var(--border-2); transform: translateY(-2px); }
+      .feature .icon { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 18px; background: color-mix(in oklab, var(--c, var(--coral)) 16%, transparent); color: var(--c, var(--coral)); }
+      .feature h3 { margin: 0 0 8px; font-size: 20px; }
+      .feature p { margin: 0; color: var(--muted); font-size: 15px; }
+      .feature .new { font-family: Inter, sans-serif; letter-spacing: 0; font-size: 11px; font-weight: 700; color: var(--lime); background: color-mix(in oklab, var(--lime) 14%, transparent); padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: 3px; }
+
+      .show { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 64px; align-items: center; }
+      .show.flip { grid-template-columns: 1.15fr 0.85fr; }
+      .show.flip .copy { order: 2; }
+      .show h2 { font-size: clamp(30px, 3.6vw, 44px); }
+      .show ul { padding: 0; margin: 22px 0 0; list-style: none; }
+      .show li { display: flex; gap: 12px; margin: 12px 0; color: var(--muted); }
+      .show li strong { color: var(--text); }
+      .show li svg { flex: none; margin-top: 4px; color: var(--coral); }
+      .shot { border-radius: 16px; overflow: hidden; border: 1px solid var(--border-2); box-shadow: 0 30px 90px -30px rgba(0,0,0,.85); cursor: zoom-in; background: var(--ink-2); padding: 0; display: block; width: 100%; }
+      .game { position: relative; border-radius: 18px; padding: 54px 40px; overflow: hidden; border: 1px solid var(--border-2);
+        background: radial-gradient(circle at 30% 20%, #3b2a5e, transparent 55%), radial-gradient(circle at 80% 90%, #5e2a2a, transparent 55%), linear-gradient(160deg, #1d2335, #0c0f17); }
+      .game::after { content: "Your game"; position: absolute; left: 18px; top: 14px; font-size: 12px; color: rgba(255,255,255,.45); letter-spacing: .08em; text-transform: uppercase; }
+      .game .shot { background: transparent; border: 0; box-shadow: none; filter: drop-shadow(0 24px 50px rgba(0,0,0,.7)); }
+
+      .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 48px; counter-reset: step; }
+      .step { border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; background: var(--surface); position: relative; }
+      .step::before { counter-increment: step; content: counter(step); font-family: Bricolage, sans-serif; font-weight: 800; font-size: 15px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--coral); color: #1d0b05; margin-bottom: 18px; }
+      .step h3 { margin: 0 0 8px; font-size: 20px; }
+      .step p { margin: 0; color: var(--muted); font-size: 15px; }
+
+      .notes { margin-top: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 30px; }
+      .notes li { color: var(--muted); margin: 14px 0; }
+      .notes li strong { color: var(--text); }
+
+      .faq { max-width: 820px; margin: 44px auto 0; }
+      details { border-bottom: 1px solid var(--border); }
+      summary { cursor: pointer; list-style: none; padding: 22px 40px 22px 0; font-weight: 600; font-size: 17px; position: relative; }
+      summary::-webkit-details-marker { display: none; }
+      summary::after { content: "+"; position: absolute; right: 6px; top: 16px; font-size: 26px; color: var(--muted); transition: transform .2s; }
+      details[open] summary::after { transform: rotate(45deg); }
+      details p { margin: 0 0 22px; color: var(--muted); }
+      details code { font-size: 12px; background: var(--surface-2); padding: 2px 6px; border-radius: 6px; word-break: break-all; }
+
+      .final { margin: 120px auto 0; text-align: center; padding: 72px 24px; border-radius: 28px; border: 1px solid var(--border);
+        background: radial-gradient(500px 240px at 50% 0%, color-mix(in oklab, var(--coral) 24%, transparent), transparent 75%), var(--surface); }
+      .final h2 { margin-top: 0; }
+      .final .lede { margin-bottom: 30px; }
+      .meta { margin: 18px auto 0; font-size: 12px; color: var(--dim); max-width: 640px; }
+      .meta code { word-break: break-all; }
+
+      footer { margin-top: 90px; padding: 34px 0 50px; border-top: 1px solid var(--border); color: var(--dim); font-size: 13px; }
+      footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 30px; align-items: center; }
+      footer .brand { font-size: 18px; color: var(--text); }
+      footer p { margin: 0; flex: 1 1 420px; }
+
+      dialog { border: 0; padding: 0; background: transparent; max-width: min(1400px, 94vw); }
+      dialog::backdrop { background: rgba(5,6,8,.86); backdrop-filter: blur(4px); }
+      dialog img { border-radius: 12px; max-height: 90vh; width: auto; }
+
+      .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+      .reveal.in { opacity: 1; transform: none; }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .reveal { opacity: 1; transform: none; transition: none; } .btn, .feature { transition: none; } }
+      @media (max-width: 960px) {
+        .features, .steps { grid-template-columns: 1fr 1fr; }
+        .show, .show.flip { grid-template-columns: 1fr; gap: 32px; }
+        .show.flip .copy { order: 0; }
+        .stage .float { position: relative; width: 80%; right: auto; bottom: auto; margin: 28px auto 0; }
+        .stage .float figcaption { display: none; }
+      }
+      @media (max-width: 640px) { .features, .steps { grid-template-columns: 1fr; } .nav nav { display: none; } .nav .wrap { justify-content: space-between; } .game { padding: 34px 14px; } }
+    </style>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="wrap">
+        <a class="brand" href="#top" aria-label="Blurt home"><svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><use href="#mark" /></svg>blurt</a>
+        <nav aria-label="Sections">
+          <a href="#features">Features</a>
+          <a href="#gaming">For gamers</a>
+          <a href="#creators">For creators</a>
+          <a href="#setup">Setup</a>
+          <a href="#faq">FAQ</a>
+          <a class="js-repo" href="https://github.com/bloopdex/blurt" style="display: inline-flex; align-items: center; gap: 6px"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.36-3.87-1.36-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>GitHub</a>
+        </nav>
+        <a class="btn primary sm js-dl" aria-disabled="true">Download</a>
+      </div>
+    </header>
+
+    <main id="top">
+      <div class="hero">
+        <div class="wrap">
+          <a class="pill" href="#whats-new" id="pill" hidden><b id="pill-version">New</b><span>Instant clips, Stream Deck control and auto push-to-talk</span></a>
+          <h1>Your soundboard,<br /><em>live on every call.</em></h1>
+          <p class="lede">
+            Blurt plays sounds straight into your microphone, so everyone in Discord, Valorant, Zoom or your stream hears them. Fire them with hotkeys, from an in-game overlay or from your Stream Deck.
+          </p>
+          <div class="cta">
+            <a class="btn primary js-dl" aria-disabled="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.5 10 4.5v7H3zm8-1.2L21 3v8.5H11zM3 12.5h7v7l-7-1zm8 0h10V21l-10-1.4z" /></svg>
+              <span class="lines">Download for Windows<small class="js-dl-sub">Checking…</small></span>
+            </a>
+            <a class="btn secondary js-repo" href="https://github.com/bloopdex/blurt"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.36-3.87-1.36-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg><span class="lines">View on GitHub<small>Open source · MIT</small></span></a>
+          </div>
+          <ul class="trust">
+            <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg>Free</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg>No account</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg>No ads, no tracking</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg>Open source (MIT)</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg>Windows 10 &amp; 11</li>
+          </ul>
+
+          <div class="stage reveal">
+            <div class="window">
+              <div class="bar"><i></i><i></i><i></i><span>Blurt</span></div>
+              <button class="shot" style="border: 0; border-radius: 0; box-shadow: none" data-zoom="assets/library.jpg" aria-label="Enlarge screenshot of the Blurt library">
+                <img src="assets/library.jpg" width="2880" height="1800" alt="Blurt's library: a grid of sound tiles with waveforms, categories in the sidebar, and a sound playing into the microphone" />
+              </button>
+            </div>
+            <figure class="float" style="margin: 0">
+              <figcaption>In-game overlay · Ctrl+Alt+B</figcaption>
+              <img src="assets/overlay.png" width="1520" height="960" alt="Blurt's in-game overlay showing ten sounds on number keys 1 to 0" loading="lazy" />
+            </figure>
+          </div>
+
+          <div class="apps">
+            <p>Works with anything that lets you choose a microphone</p>
+            <ul>
+              <li>Discord</li><li>Valorant</li><li>CS2</li><li>Fortnite</li><li>Zoom</li><li>Teams</li><li>Google Meet</li><li>OBS</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <section id="features">
+        <div class="wrap">
+          <div class="center reveal">
+            <div class="eyebrow">Features</div>
+            <h2>Everything a soundboard should do.<br />None of the junk.</h2>
+            <p class="lede">No sign-up, no ads, no premium tier. Just fast sounds, wherever you talk.</p>
+          </div>
+          <div class="features">
+            <article class="feature reveal">
+              <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0M12 17v5" /></svg></div>
+              <h3>Straight into your mic</h3>
+              <p>Sounds go out through a virtual microphone, and your real voice is mixed in, so you don't have to switch inputs.</p>
+            </article>
+            <article class="feature reveal" style="--c: var(--amber)">
+              <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2" /><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" /></svg></div>
+              <h3>Global hotkeys</h3>
+              <p>Any sound on any key combo. Hotkeys work in-game and while Blurt is minimized to the tray. You also get Replay last, Random sound and Stop all.</p>
+            </article>
+            <article class="feature reveal" style="--c: var(--violet)">
+              <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2" /><rect x="8" y="8" width="8" height="6" rx="1" /><path d="M8 21h8" /></svg></div>
+              <h3>In-game overlay</h3>
+              <p>Press Ctrl+Alt+B to see your top sounds over the game, then play them with 1–9. The game stays in focus.</p>
+            </article>
+            <article class="feature reveal" style="--c: var(--lime)">
+              <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="6" /><path d="M12 6v4" /></svg></div>
+              <h3>Auto push-to-talk <span class="new">NEW</span></h3>
+              <p>Blurt holds your push-to-talk key or mouse button while a sound plays, so your squad actually hears it.</p>
+            </article>
+            <article class="feature reveal">
+              <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="3" fill="currentColor" /></svg></div>
+              <h3>Instant clips <span class="new">NEW</span></h3>
+              <p>Something hilarious just happened? Ctrl+Alt+C saves the last 30 seconds of what you heard as a sound.</p>
+            </article>
+            <article class="feature reveal" style="--c: var(--amber)">
+              <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg></div>
+              <h3>Stream Deck control <span class="new">NEW</span></h3>
+              <p>Play, randomize, replay, stop or clip from Stream Deck, Touch Portal or Streamer.bot with one private link.</p>
+            </article>
+            <article class="feature reveal" style="--c: var(--violet)">
+              <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 9h8M8 13h5" /></svg></div>
+              <h3>Text to speech <span class="new">NEW</span></h3>
+              <p>Type a line and a voice says it into your mic. Each line is saved as a sound, so you can replay it or bind it to a key.</p>
+            </article>
+            <article class="feature reveal" style="--c: var(--lime)">
+              <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14" /></svg></div>
+              <h3>Import anything</h3>
+              <p>Drag in MP3, WAV, OGG, FLAC, M4A or AIFF files, or paste a YouTube, TikTok or Instagram link and trim the part you want.</p>
+            </article>
+            <article class="feature reveal">
+              <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l3-8 4 16 3-8h5" /></svg></div>
+              <h3>Sounds that sound right</h3>
+              <p>Loudness normalization, per-sound volume, trimming and fades. Your voice can dip automatically while a sound plays.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="gaming">
+        <div class="wrap show flip">
+          <div class="copy reveal">
+            <div class="eyebrow">For gamers</div>
+            <h2>Built for the middle of a match.</h2>
+            <p class="lede" style="margin: 0">You can't alt-tab in a clutch, so you don't have to.</p>
+            <ul>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg><span><strong>The overlay never steals focus.</strong> Your game stays fullscreen, with no taskbar popping up, and it closes on its own.</span></li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg><span><strong>Pinned sounds come first</strong> on keys 1–9 and 0, in the order you choose.</span></li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg><span><strong>Nothing gets injected into the game.</strong> Blurt draws its own window, the way anti-cheat expects.</span></li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg><span><strong>Push-to-talk handled.</strong> Blurt presses your PTT key or mouse button while the sound plays.</span></li>
+            </ul>
+          </div>
+          <div class="game reveal">
+            <button class="shot" data-zoom="assets/overlay.png" aria-label="Enlarge screenshot of the in-game overlay">
+              <img src="assets/overlay.png" width="1520" height="960" alt="The Blurt overlay: ten tiles numbered 1 to 0, pinned sounds first, the playing sound highlighted" loading="lazy" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="creators">
+        <div class="wrap show">
+          <div class="copy reveal">
+            <div class="eyebrow">For streamers &amp; creators</div>
+            <h2>Your stream's sound desk.</h2>
+            <p class="lede" style="margin: 0">Wire Blurt into the tools you already use.</p>
+            <ul>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg><span><strong>Stream Deck, Touch Portal and Streamer.bot</strong> can play any sound by name with a private link that only works on your PC.</span></li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg><span><strong>Clip that.</strong> Save the last 5–120 seconds as a sound. It's kept in memory only until you clip.</span></li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg><span><strong>Mic ducking</strong> turns your voice down while a sound plays, so the bit lands.</span></li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" /></svg><span><strong>Text to speech</strong> for chat-read moments and quick replies.</span></li>
+            </ul>
+          </div>
+          <div class="reveal">
+            <button class="shot" data-zoom="assets/stream.jpg" aria-label="Enlarge screenshot of the Stream & game settings">
+              <img src="assets/stream.jpg" width="2880" height="1800" alt="Blurt's Stream & game settings: push-to-talk key, instant clips and Stream Deck links" loading="lazy" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap show flip">
+          <div class="copy reveal">
+            <div class="eyebrow">Text to speech</div>
+            <h2>Say it without saying it.</h2>
+            <p class="lede" style="margin: 0">Type a line, choose a voice, and it plays into your mic. It stays in your library for the next time.</p>
+          </div>
+          <div class="reveal">
+            <button class="shot" data-zoom="assets/speak.jpg" aria-label="Enlarge screenshot of text to speech">
+              <img src="assets/speak.jpg" width="2880" height="1800" alt="The Speak box in Blurt with the text 'gg wp, see you next round' and a Speak into mic button" loading="lazy" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="setup">
+        <div class="wrap">
+          <div class="center reveal">
+            <div class="eyebrow">Setup</div>
+            <h2>Up and running in a minute.</h2>
+            <p class="lede">Apps can't create microphones on their own, so Blurt uses a free virtual audio cable. If your PC doesn't have one, Blurt fetches it for you.</p>
+          </div>
+          <div class="steps">
+            <div class="step reveal">
+              <h3>Install Blurt</h3>
+              <p>Run the installer. Your sounds and settings survive every update.</p>
+            </div>
+            <div class="step reveal">
+              <h3>Press "Set up my microphone"</h3>
+              <p>Blurt finds or installs VB-CABLE from its official site, tests it with a real signal, fixes the level and mixes in your mic.</p>
+            </div>
+            <div class="step reveal">
+              <h3>Pick it in Discord</h3>
+              <p>Choose <strong>CABLE Output</strong> as your input device. That's it — start blurting.</p>
+            </div>
+          </div>
+          <div class="reveal" style="max-width: 980px; margin: 40px auto 0">
+            <button class="shot" data-zoom="assets/setup.jpg" aria-label="Enlarge screenshot of the one-click microphone setup">
+              <img src="assets/setup.jpg" width="2880" height="1800" alt="Blurt's welcome guide with one button: Set up my microphone" loading="lazy" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="whats-new" hidden>
+        <div class="wrap" style="max-width: 860px">
+          <div class="center">
+            <div class="eyebrow">Changelog</div>
+            <h2>What's new in <span id="notes-version"></span></h2>
+          </div>
+          <ul class="notes" id="notes"></ul>
+        </div>
+      </section>
+
+      <section id="faq">
+        <div class="wrap">
+          <div class="center">
+            <div class="eyebrow">FAQ</div>
+            <h2>Good questions.</h2>
+          </div>
+          <div class="faq">
+            <details>
+              <summary>Is Blurt really free?</summary>
+              <p>Yes. There's no paid tier, account, ads or tracking. Blurt is MIT licensed. It only goes online when you ask it to: downloading a clip from a link, or fetching the virtual cable.</p>
+            </details>
+            <details>
+              <summary>Is Blurt open source?</summary>
+              <p>Yes. The full source code, issue tracker and every release are on <a class="js-repo" href="https://github.com/bloopdex/blurt">GitHub</a>. Each installer is built by GitHub Actions from the tagged source, and its SHA-256 checksum is published with the release.</p>
+            </details>
+            <details>
+              <summary>Windows warns me when I run the installer. Is it safe?</summary>
+              <p>Blurt isn't code-signed yet, so Windows SmartScreen shows "Windows protected your PC". Choose <em>More info → Run anyway</em>. You can check that your download is the official build by comparing its SHA-256 checksum with the one on this page: <code id="faq-sha">—</code>. In PowerShell, run <code>Get-FileHash Blurt-Setup.exe</code>.</p>
+            </details>
+            <details>
+              <summary>Do I need VB-CABLE?</summary>
+              <p>You need a virtual audio cable, because that's how any soundboard reaches your microphone. If you don't have one, press <em>Set up my microphone</em> and Blurt downloads VB-CABLE from vb-audio.com, checks VB-Audio's signature and opens its installer. VB-CABLE is free donationware by VB-Audio. Its licence doesn't allow bundling it inside Blurt's installer, which is why it's a separate step.</p>
+            </details>
+            <details>
+              <summary>Can it get me banned in Valorant, CS2 or other games?</summary>
+              <p>Blurt doesn't inject into, read or modify any game. The overlay is a normal always-on-top window, and sounds go through your microphone like your voice does. Auto push-to-talk sends a simulated key press. Some anti-cheat systems ignore simulated keys, so if it doesn't work in a game, hold your push-to-talk key yourself.</p>
+            </details>
+            <details>
+              <summary>The overlay doesn't show over my game.</summary>
+              <p>Some games in true exclusive fullscreen don't allow any window on top. Set the game's display mode to <em>Windowed Fullscreen</em> or <em>Borderless</em>, which looks the same. Number keys still play sounds while the overlay is open.</p>
+            </details>
+            <details>
+              <summary>Does instant clips record me all the time?</summary>
+              <p>Only if you turn it on, and only into memory. Blurt keeps the last few seconds of what your speakers or headset play and writes nothing to disk until you press the clip shortcut. Turning it off clears the buffer.</p>
+            </details>
+            <details>
+              <summary>Is there a Mac version?</summary>
+              <p>Not yet. The macOS build hasn't been tested end to end, so we won't offer it until it has.</p>
+            </details>
+            <details>
+              <summary>What happens to my sounds if I update or uninstall?</summary>
+              <p>Updates keep everything. Uninstalling keeps your library too, unless you tick "Delete the application data". You can also back up your library to a .zip from Settings → Storage.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <div class="wrap">
+        <div class="final reveal">
+          <h2>Make some noise.</h2>
+          <p class="lede">Free for Windows 10 and 11. No account needed.</p>
+          <a class="btn primary js-dl" aria-disabled="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.5 10 4.5v7H3zm8-1.2L21 3v8.5H11zM3 12.5h7v7l-7-1zm8 0h10V21l-10-1.4z" /></svg>
+            <span class="lines">Download for Windows<small class="js-dl-sub">Checking…</small></span>
+          </a>
+          <p class="meta" id="meta"></p>
+          <p class="meta"><span id="msi-line" hidden>IT admins: <a id="dl-msi" href="#">MSI package</a> · </span><a class="js-releases" href="https://github.com/bloopdex/blurt/releases">All releases &amp; checksums</a> · <a class="js-repo" href="https://github.com/bloopdex/blurt">Source code</a> · macOS: coming soon</p>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <a class="brand" href="#top"><svg viewBox="0 0 64 64" width="24" height="24" aria-hidden="true"><use href="#mark" /></svg>blurt</a>
+        <p><a class="js-repo" href="https://github.com/bloopdex/blurt">GitHub</a> · <a class="js-releases" href="https://github.com/bloopdex/blurt/releases">Releases</a> · <a href="https://github.com/bloopdex/blurt/issues">Report a bug</a><br />MIT licensed. VB-CABLE is a separate product by VB-Audio, and yt-dlp is installed only if you use link downloads. Each is under its own licence. Game and app names belong to their owners, and Blurt isn't affiliated with them.</p>
+      </div>
+    </footer>
+
+    <dialog id="zoom" aria-label="Screenshot">
+      <form method="dialog"><button style="all: unset; cursor: zoom-out; display: block" aria-label="Close"><img id="zoom-img" alt="" /></button></form>
+    </dialog>
+
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="mark" viewBox="0 0 64 64">
+        <path fill="#FF5B3A" d="M20 6h24c8.837 0 16 7.163 16 16v12c0 8.837-7.163 16-16 16H27.5l-13.8 10.35c-1.32.99-3.2-.12-2.95-1.75L12.6 48.7C7.5 46 4 40.4 4 34V22C4 13.163 11.163 6 20 6Z" />
+        <rect x="19" y="21" width="6" height="15" rx="3" fill="#0D0E11" />
+        <rect x="29" y="15" width="6" height="27" rx="3" fill="#0D0E11" />
+        <rect x="39" y="19" width="6" height="19" rx="3" fill="#0D0E11" />
+      </symbol>
+    </svg>
+
+    <script src="config.js"></script>
+    <script src="release.js" onerror="window.BLURT_RELEASE = null"></script>
+    <script>
+      (function () {
+        const site = window.BLURT_SITE || {};
+        const rel = window.BLURT_RELEASE;
+        const $ = (id) => document.getElementById(id);
+        const mb = (b) => (b / 1048576).toFixed(1) + " MB";
+        const file = (name) => rel && rel.files && rel.files[name];
+
+        // A download button only becomes a link when that installer was actually built and recorded.
+        const win = file("Blurt-Setup.exe");
+        document.querySelectorAll(".js-dl").forEach((a) => {
+          if (!(win && site.downloadBase)) return;
+          a.href = site.downloadBase + "Blurt-Setup.exe";
+          a.setAttribute("download", "");
+          a.removeAttribute("aria-disabled");
+        });
+        document.querySelectorAll(".js-dl-sub").forEach((s) => {
+          s.textContent = win && site.downloadBase ? "v" + rel.version + " · " + mb(win.size) + " · 64-bit" : "Not published yet";
+        });
+        if (win) {
+          $("meta").innerHTML = "SHA-256 <code>" + win.sha256 + "</code>";
+          $("faq-sha").textContent = win.sha256;
+        }
+        const msi = file("Blurt-Setup.msi");
+        if (msi && site.downloadBase) {
+          $("dl-msi").href = site.downloadBase + "Blurt-Setup.msi";
+          $("msi-line").hidden = false;
+        }
+
+        if (rel && rel.notes) {
+          $("whats-new").hidden = false;
+          $("notes-version").textContent = "v" + rel.version;
+          $("pill").hidden = false;
+          $("pill-version").textContent = "New in v" + rel.version;
+          const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+          $("notes").innerHTML = rel.notes
+            .split("\n")
+            .filter((l) => l.startsWith("- "))
+            .map((l) => "<li>" + esc(l.slice(2)).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>") + "</li>")
+            .join("");
+        }
+        if (site.repoUrl) document.querySelectorAll(".js-repo").forEach((a) => (a.href = site.repoUrl));
+        if (site.releasesUrl) document.querySelectorAll(".js-releases").forEach((a) => (a.href = site.releasesUrl));
+
+        // Screenshot zoom.
+        const dlg = $("zoom");
+        document.querySelectorAll("[data-zoom]").forEach((b) =>
+          b.addEventListener("click", () => {
+            $("zoom-img").src = b.dataset.zoom;
+            $("zoom-img").alt = b.querySelector("img").alt;
+            dlg.showModal();
+          }),
+        );
+        dlg.addEventListener("click", (e) => e.target === dlg && dlg.close());
+
+        // Fade sections in as they scroll into view.
+        const io = "IntersectionObserver" in window && new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && (e.target.classList.add("in"), io.unobserve(e.target))), { rootMargin: "0px 0px -8% 0px" });
+        document.querySelectorAll(".reveal").forEach((el) => (io ? io.observe(el) : el.classList.add("in")));
+      })();
+    </script>
+  </body>
+</html>

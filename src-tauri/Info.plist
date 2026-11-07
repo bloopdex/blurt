@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Blurt mixes your microphone into its virtual microphone (when passthrough is on) and verifies that the virtual microphone receives audio.</string>
+</dict>
+</plist>
