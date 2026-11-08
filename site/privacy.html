@@ -34,14 +34,16 @@
         <li><strong>Text to speech</strong> uses the voices built into your operating system. Your text is not sent anywhere.</li>
         <li><strong>Local control server:</strong> Blurt listens on <code>127.0.0.1:7270</code>, an address only programs on your own computer can reach. Remote control (Stream Deck and similar) needs a secret key that Blurt shows you. The browser extension route only answers browser extensions.</li>
       </ul>
-      <p>The app connects to the internet only when you ask it to:</p>
+      <p>The app connects to the internet in these cases only:</p>
       <table>
         <tr><th>When</th><th>Connects to</th><th>What is sent</th></tr>
+        <tr><td>Blurt starts, if “Check for updates automatically” is on (it is by default; turn it off in Settings → About)</td><td>github.com, to read the small file that says which version is newest</td><td>A normal file request. No identifier, library or usage data is included</td></tr>
+        <tr><td>You click “Update now”</td><td>github.com, to download the new installer</td><td>A normal file download</td></tr>
         <tr><td>You download a sound from a link (in the app or through the extension)</td><td>The site in that link, for example YouTube, through the open-source tool yt-dlp</td><td>A normal request for that page and its media, as a browser would make</td></tr>
         <tr><td>First link download</td><td>github.com, to fetch yt-dlp</td><td>A normal file download</td></tr>
         <tr><td>You press “Set up my microphone” and need a virtual cable</td><td>vb-audio.com, to fetch VB-CABLE</td><td>A normal file download</td></tr>
       </table>
-      <p>Those sites have their own privacy policies. Blurt does not check for updates, report crashes or send usage statistics.</p>
+      <p>Like any web request, these reveal your IP address to the site you connect to, and those sites have their own privacy policies. Blurt doesn't report crashes or send usage statistics.</p>
 
       <h2>The “Send to Blurt” browser extension</h2>
       <ul>

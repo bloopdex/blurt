@@ -32,6 +32,7 @@ import { DownloadsView } from "@/views/DownloadsView";
 import { LibraryView } from "@/views/LibraryView";
 import { Onboarding } from "@/views/Onboarding";
 import { autoSetup, FINISH_SETUP_KEY } from "@/components/routing/EasySetup";
+import { checkForUpdates } from "@/lib/updates";
 import { SettingsView } from "@/views/SettingsView";
 
 // Sidebar targets need the pointer to be inside them; grid reordering uses the nearest card.
@@ -67,6 +68,10 @@ export default function App() {
     loadSettings()
       .then(() => useApp.getState().refreshDevices())
       .then(finishSetupAfterRestart)
+      .then(() => {
+        // A few seconds after launch, so the check never delays startup.
+        if (useApp.getState().settings?.autoUpdate) setTimeout(() => void checkForUpdates(false), 5000);
+      })
       .catch((e) => toast.error("Blurt couldn't load its settings", { description: String(e) }));
     void loadLibrary();
     void useDownloads.getState().load();

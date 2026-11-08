@@ -16,6 +16,7 @@ import { AudioSetup } from "@/components/routing/AudioSetup";
 import { ShortcutRecorder } from "@/components/sounds/ShortcutRecorder";
 import { api, errorMessage, type Settings, type ShortcutProblem, type StorageInfo } from "@/lib/api";
 import { formatBytes } from "@/lib/format";
+import { checkForUpdates, PRIVACY_URL, TERMS_URL } from "@/lib/updates";
 import { useApp, type SettingsTab } from "@/store/app";
 import { useLibrary } from "@/store/library";
 
@@ -400,8 +401,21 @@ function About() {
         </Row>
       </Section>
       <Section title="Updates">
-        <Row title="Check for updates" description="Automatic updates aren't enabled in this build; install new versions from the release page.">
-          <span className="text-xs text-muted-foreground">Manual</span>
+        <Row title="Check for updates automatically" description="When Blurt starts, it asks GitHub whether a newer version exists. Nothing installs until you click Update now. Every update is signed, and Blurt refuses any that isn't.">
+          <Toggle k="autoUpdate" label="Check for updates automatically" />
+        </Row>
+        <Row title="Check now" description={`You have version ${info?.version ?? "…"}.`}>
+          <Button variant="outline" size="sm" onClick={() => void checkForUpdates(true)}>
+            Check for updates
+          </Button>
+        </Row>
+      </Section>
+      <Section title="Legal">
+        <Row title="Privacy Policy" description="What Blurt and its browser extension do with your data: everything stays on your computer.">
+          {link(PRIVACY_URL, "Read")}
+        </Row>
+        <Row title="Terms of Use" description="The rules for using Blurt, its extension and website.">
+          {link(TERMS_URL, "Read")}
         </Row>
       </Section>
     </div>

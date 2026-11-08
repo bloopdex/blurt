@@ -20,6 +20,8 @@ pub struct Settings {
     pub show_notifications: bool,
     pub show_dock_icon: bool,
     pub onboarding_done: bool,
+    /// Check GitHub for a newer signed release at startup (installing always asks first).
+    pub auto_update: bool,
     // Audio routing
     /// Output device that feeds the virtual microphone (e.g. "CABLE Input (VB-Audio Virtual Cable)").
     pub virtual_mic_device: Option<String>,
@@ -86,6 +88,7 @@ impl Default for Settings {
             show_notifications: true,
             show_dock_icon: true,
             onboarding_done: false,
+            auto_update: true,
             virtual_mic_device: None,
             virtual_mic_capture: None,
             monitor_device: None,

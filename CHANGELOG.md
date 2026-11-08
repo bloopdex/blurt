@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.0] - 2026-11-08
+
+- **Automatic updates.** Blurt checks for a new version when it starts and offers to install it in one click. Your sounds and settings are kept, and Blurt restarts on the new version. Every update is cryptographically signed, and Blurt refuses any update whose signature doesn't match. Turn off the automatic check, or check by hand, in Settings → About.
+- **Privacy Policy and Terms of Use** are linked in Settings → About and on the welcome screen, and now cover update checks.
+- This is the last version you need to download yourself; later ones install from inside Blurt.
+
 ## [0.5.1] - 2026-11-08
 
 - **Fixed: the overlay froze Blurt.** Opening the overlay with its keyboard shortcut locked up the app, so neither Esc, the shortcut nor anything else could close it. It now closes with Esc, with the shortcut again, with the new **✕** button, or by itself after 4 seconds.

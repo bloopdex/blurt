@@ -1,70 +1,33 @@
-# Automatic updates — readiness plan
+# Automatic updates
 
-Blurt doesn't ship an updater yet. "Check for updates" in About is manual on purpose: **an update mechanism without signature verification is worse than none.** When we turn it on, it will be the official `tauri-plugin-updater`, which refuses any update whose signature doesn't verify.
+Blurt uses the official `tauri-plugin-updater`. At startup (if *Check for updates automatically* is on), and when you press *Check for updates* in Settings → About, it reads
 
-## 1. Signing keys
+    https://github.com/bloopdex/blurt/releases/latest/download/latest.json
 
-Updates are signed with an **Ed25519 (minisign) key pair**. This is separate from Windows Authenticode and Apple notarization, which you also want.
+If that lists a newer version, Blurt offers **Update now**. The plugin downloads the installer and **verifies its signature against the public key compiled into Blurt** (`plugins.updater.pubkey` in `tauri.conf.json`). Only then does it run the installer (NSIS, passive mode: a progress window, and a UAC prompt because Blurt installs per machine). The installer closes Blurt and starts the new version. Library and settings are untouched.
+
+## Signing key
+
+* An **Ed25519 (minisign) key pair**, separate from Windows Authenticode. Created with `pnpm tauri signer generate`.
+* **Private key + password:** repository secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, used only by `.github/workflows/release.yml`. A local copy lives in `~/.tauri/blurt-updater.key` and `~/.tauri/blurt-updater.password` on the maintainer's PC.
+* **Back up both files somewhere safe and offline.** If the key is lost, installed copies can never verify another update, and everyone has to reinstall by hand. If the key leaks, an attacker could sign "updates": rotate it by publishing one last release signed with the old key that ships a new public key.
+
+## How a release produces an update
+
+1. `tauri build` with `bundle.createUpdaterArtifacts: true` and the private key writes `Blurt_X_x64-setup.exe.sig` next to the installer.
+2. `scripts/package.mjs` copies the installer to `dist/Blurt-Setup.exe` and writes `dist/latest.json` (version, notes from `CHANGELOG.md`, signature, and the URL of *this version's* `Blurt-Setup.exe`). The release job fails if `latest.json` is missing.
+3. The release publishes both. Because it's marked *latest*, `releases/latest/download/latest.json` now points at it.
+
+CI builds (`build.yml`) skip update signing with `--config '{"bundle":{"createUpdaterArtifacts":false}}'`, so pull requests don't need the key.
+
+To build a signed release locally:
 
 ```sh
-pnpm tauri signer generate -w ~/.tauri/blurt-updater.key
+TAURI_SIGNING_PRIVATE_KEY="$(cat ~/.tauri/blurt-updater.key)" \
+TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(cat ~/.tauri/blurt-updater.password)" \
+pnpm release:win
 ```
 
-* **Private key + password** → repository secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Never commit them. Keep an offline backup: losing the key means existing installs can never be updated again (users would have to reinstall manually).
-* **Public key** → committed in `tauri.conf.json` (`plugins.updater.pubkey`), and therefore compiled into every build.
+## Privacy
 
-## 2. Configuration
-
-```jsonc
-// src-tauri/tauri.conf.json
-"bundle": { "createUpdaterArtifacts": true },
-"plugins": {
-  "updater": {
-    "pubkey": "<contents of blurt-updater.key.pub>",
-    "endpoints": ["https://github.com/OWNER/REPO/releases/latest/download/latest.json"],
-    "windows": { "installMode": "passive" }
-  }
-}
-```
-
-Add `tauri-plugin-updater` (Rust) and `@tauri-apps/plugin-updater` (JS), plus the `updater:default` capability.
-
-## 3. Update manifest (`latest.json`)
-
-`tauri build` with `createUpdaterArtifacts` produces a `.sig` next to each installer. The release job assembles:
-
-```json
-{
-  "version": "0.3.0",
-  "notes": "…from CHANGELOG.md…",
-  "pub_date": "2026-12-01T12:00:00Z",
-  "platforms": {
-    "windows-x86_64": { "signature": "<contents of Blurt_0.3.0_x64-setup.exe.sig>", "url": "https://github.com/OWNER/REPO/releases/download/v0.3.0/Blurt-Setup.exe" },
-    "darwin-aarch64": { "signature": "…", "url": "…/Blurt-macOS-arm64.app.tar.gz" },
-    "darwin-x86_64":  { "signature": "…", "url": "…/Blurt-macOS-x64.app.tar.gz" }
-  }
-}
-```
-
-## 4. Hosting
-
-GitHub Releases is enough. `releases/latest/download/latest.json` always points at the newest *published* release; drafts are invisible to clients, so the draft-then-publish flow in `release.yml` doubles as a release gate.
-
-## 5. Verification
-
-The client downloads `latest.json` over HTTPS, compares versions, downloads the installer, and **verifies its Ed25519 signature against the embedded public key before running anything**. A bad or missing signature aborts the update. HTTPS protects the transport; the signature protects against a compromised release host.
-
-## 6. Installation flow
-
-1. On launch (and from About → Check for updates), call `check()`; if newer, show the notes and an **Update** button. Never install silently without consent.
-2. `downloadAndInstall()` with a progress bar.
-3. Windows: the NSIS installer runs in passive mode with `/UPDATE`, which upgrades in place and **never deletes app data** (the template skips the delete-data step in update mode). macOS: the `.app` is replaced.
-4. Restart into the new version. The library lives in the app-data folder, not the install folder, so it survives (verified for manual upgrades — see IMPLEMENTATION_STATUS.md).
-
-## Checklist to enable
-
-- [ ] Generate the key pair; store the secrets and an offline backup
-- [ ] Add the plugin, config and capability; wire the About button
-- [ ] Extend `release.yml` to upload `.sig` files and `latest.json`
-- [ ] Test an upgrade from the previous published version on Windows and macOS
-- [ ] Test that a tampered installer (bad signature) is rejected
+The update check is a plain request for `latest.json` on github.com. No identifier, library or usage data is sent. It's disclosed in the [privacy policy](https://blurt.bloopdex.com/privacy.html) and can be turned off.

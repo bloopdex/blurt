@@ -58,6 +58,7 @@ export const settingsSchema = z.object({
   showNotifications: z.boolean(),
   showDockIcon: z.boolean(),
   onboardingDone: z.boolean(),
+  autoUpdate: z.boolean(),
   virtualMicDevice: z.string().nullable(),
   virtualMicCapture: z.string().nullable(),
   monitorDevice: z.string().nullable(),

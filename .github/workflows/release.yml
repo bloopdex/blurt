@@ -42,14 +42,22 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck && pnpm test
       - run: cargo test --manifest-path src-tauri/Cargo.toml
-      - name: Build installers
+      - name: Build installers (and sign the update)
         run: pnpm tauri build --target ${{ matrix.target }}
-      - name: Collect, verify format, name consistently (also writes site/release.js)
-        run: node scripts/package.mjs --target ${{ matrix.target }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      - name: Collect, verify format, name consistently (also writes site/release.js and latest.json)
+        run: |
+          node scripts/package.mjs --target ${{ matrix.target }}
+          test -f dist/latest.json || { echo "No signed update manifest: is TAURI_SIGNING_PRIVATE_KEY set?"; exit 1; }
+        shell: bash
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.target }}
-          path: dist/Blurt-*
+          path: |
+            dist/Blurt-*
+            dist/latest.json
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:

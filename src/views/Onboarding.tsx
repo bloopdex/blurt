@@ -7,7 +7,10 @@ import { Kbd } from "@/components/Kbd";
 import { LogoMark, Wordmark } from "@/components/Logo";
 import { AudioSetup, DriverGuide } from "@/components/routing/AudioSetup";
 import { EasySetup } from "@/components/routing/EasySetup";
+import { openUrl } from "@tauri-apps/plugin-opener";
+
 import { pickFilesToImport } from "@/lib/actions";
+import { PRIVACY_URL, TERMS_URL } from "@/lib/updates";
 import { cn } from "@/lib/utils";
 import { currentCheck, routingState, useApp } from "@/store/app";
 
@@ -59,6 +62,17 @@ export function Onboarding() {
                 Pick a sound, press a button, and everyone listening to your microphone hears it — on Discord, Zoom, Teams, Meet or in-game chat.
               </DialogDescription>
               <p className="mx-auto max-w-md text-sm text-muted-foreground">Setup takes one click. You can skip any step and come back from Settings.</p>
+              <p className="mx-auto max-w-md text-xs text-muted-foreground">
+                By using Blurt you agree to the{" "}
+                <button type="button" className="underline hover:text-foreground" onClick={() => void openUrl(TERMS_URL)}>
+                  Terms of Use
+                </button>{" "}
+                and{" "}
+                <button type="button" className="underline hover:text-foreground" onClick={() => void openUrl(PRIVACY_URL)}>
+                  Privacy Policy
+                </button>
+                .
+              </p>
             </div>
           )}
 

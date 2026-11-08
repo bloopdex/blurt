@@ -42,7 +42,8 @@ jobs:
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
       - name: Build installers
-        run: pnpm tauri build --target ${{ matrix.target }}
+        # CI builds aren't releases: skip update signing (its key only exists for tag builds).
+        run: pnpm tauri build --target ${{ matrix.target }} --config '{"bundle":{"createUpdaterArtifacts":false}}'
         # Apple signing: add the APPLE_* secrets and pass them here as env once a certificate exists.
         # Empty values make the bundler try (and fail) to sign, so they are not passed until then.
 
