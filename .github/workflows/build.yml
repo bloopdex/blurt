@@ -44,6 +44,7 @@ jobs:
       - name: Build installers
         # CI builds aren't releases: skip update signing (its key only exists for tag builds).
         run: pnpm tauri build --target ${{ matrix.target }} --config '{"bundle":{"createUpdaterArtifacts":false}}'
+        shell: bash # PowerShell strips the quotes inside the JSON
         # Apple signing: add the APPLE_* secrets and pass them here as env once a certificate exists.
         # Empty values make the bundler try (and fail) to sign, so they are not passed until then.
 
