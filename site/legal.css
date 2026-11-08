@@ -1,0 +1,28 @@
+@font-face { font-family: "Bricolage"; src: url("assets/fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("assets/fonts/inter-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+:root { --ink: #0d0e11; --surface: #15171c; --border: #262a33; --text: #ecedef; --muted: #9096a3; --coral: #ff5b3a; }
+* { box-sizing: border-box; }
+html { background: var(--ink); color: var(--text); font: 16px/1.7 Inter, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body { margin: 0; }
+a { color: var(--coral); }
+.wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+.nav { border-bottom: 1px solid var(--border); }
+.nav .wrap { display: flex; align-items: center; gap: 18px; height: 64px; max-width: 1180px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-family: Bricolage, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.04em; }
+.nav nav { margin-left: auto; display: flex; gap: 20px; font-size: 14px; }
+.nav nav a { color: var(--muted); text-decoration: none; }
+.nav nav a:hover, .nav nav a[aria-current] { color: var(--text); }
+h1, h2 { font-family: Bricolage, Inter, sans-serif; letter-spacing: -0.03em; line-height: 1.1; }
+h1 { font-size: clamp(34px, 5vw, 48px); margin: 56px 0 8px; }
+h2 { font-size: 23px; margin: 40px 0 10px; }
+.updated { color: var(--muted); margin: 0 0 32px; }
+.summary { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 6px 24px; }
+p, li { color: #c9ccd3; }
+li { margin: 6px 0; }
+strong { color: var(--text); }
+code { font-size: 13px; background: #1c1f26; padding: 2px 6px; border-radius: 6px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+footer { margin-top: 72px; padding: 28px 0 48px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+:focus-visible { outline: 3px solid rgba(255, 91, 58, 0.6); outline-offset: 3px; border-radius: 6px; }

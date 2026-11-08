@@ -3,6 +3,9 @@
 //! so a web page you visit can't fire sounds.
 //!
 //! GET /play?name=Airhorn&token=…   (or id=…)   /random   /replay   /stop   /clip   /overlay   /sounds
+//!
+//! The browser extension uses POST /extension/ping and POST /extension/send?url=… instead. Those
+//! need no token but only answer requests whose Origin is a browser extension, which pages can't fake.
 
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -70,15 +73,21 @@ fn serve(app: &AppHandle, mut stream: TcpStream) {
         }
     }
     let head = String::from_utf8_lossy(&buf[..len]);
-    let target = head.lines().next().and_then(|l| l.strip_prefix("GET ")).and_then(|l| l.split(' ').next());
+    let mut first = head.lines().next().unwrap_or_default().split(' ');
+    let (method, target) = (first.next().unwrap_or_default(), first.next());
+    let origin = head
+        .lines()
+        .find_map(|l| l.split_once(':').filter(|(k, _)| k.trim().eq_ignore_ascii_case("origin")).map(|(_, v)| v.trim().to_owned()))
+        .unwrap_or_default();
     let (status, body) = match target {
-        Some(t) => route(app, t),
-        None => (405, json!({ "ok": false, "error": "Use GET." })),
+        Some(t) if method == "GET" || method == "POST" => route(app, method, t, &origin),
+        _ => (405, json!({ "ok": false, "error": "Use GET." })),
     };
     let body = body.to_string();
     let reason = match status {
         200 => "OK",
         401 => "Unauthorized",
+        403 => "Forbidden",
         404 => "Not Found",
         405 => "Method Not Allowed",
         _ => "Bad Request",
@@ -90,12 +99,21 @@ fn serve(app: &AppHandle, mut stream: TcpStream) {
     );
 }
 
-fn route(app: &AppHandle, target: &str) -> (u16, Value) {
+fn route(app: &AppHandle, method: &str, target: &str, origin: &str) -> (u16, Value) {
     let Ok(url) = url::Url::parse(&format!("http://localhost{target}")) else {
         return (400, json!({ "ok": false, "error": "Bad request." }));
     };
     let param = |k: &str| url.query_pairs().find(|(n, _)| n == k).map(|(_, v)| v.into_owned());
     let state = app.state::<AppState>();
+    if let Some(action) = url.path().strip_prefix("/extension/") {
+        return extension(app, method, action, origin, param("url"));
+    }
+    if method != "GET" {
+        return (405, json!({ "ok": false, "error": "Use GET." }));
+    }
+    if !state.settings().remote_control {
+        return (403, json!({ "ok": false, "error": "Remote control is off. Turn it on in Blurt → Settings → Stream & game." }));
+    }
     let token = state.settings().remote_token;
     if token.is_empty() || param("token").as_deref() != Some(token.as_str()) {
         return (401, json!({ "ok": false, "error": "Missing or wrong token. Copy the link from Blurt → Settings → Stream & game." }));
@@ -140,6 +158,29 @@ fn route(app: &AppHandle, target: &str) -> (u16, Value) {
     }
 }
 
+pub fn is_extension(origin: &str) -> bool {
+    origin.starts_with("chrome-extension://") || origin.starts_with("moz-extension://")
+}
+
+fn extension(app: &AppHandle, method: &str, action: &str, origin: &str, link: Option<String>) -> (u16, Value) {
+    if !is_extension(origin) {
+        return (403, json!({ "ok": false, "error": "Only the Blurt browser extension can use this." }));
+    }
+    let state = app.state::<AppState>();
+    if !state.settings().browser_extension {
+        return (403, json!({ "ok": false, "error": "The browser extension is turned off in Blurt → Settings → Stream & game." }));
+    }
+    match (method, action, link) {
+        ("POST", "ping", _) => (200, json!({ "ok": true, "version": app.package_info().version.to_string() })),
+        ("POST", "send", Some(link)) => match crate::commands::download_from_link(app, &state, &link) {
+            Ok(title) => (200, json!({ "ok": true, "title": title })),
+            Err(e) => (400, json!({ "ok": false, "error": e.to_string() })),
+        },
+        ("POST", "send", None) => (400, json!({ "ok": false, "error": "Add ?url=…" })),
+        _ => (404, json!({ "ok": false, "error": "Unknown extension action." })),
+    }
+}
+
 /// Exact name (ignoring case) wins; otherwise a single partial match.
 fn find_by_name<'a>(sounds: &'a [crate::db::sounds::Sound], name: &str) -> Option<&'a crate::db::sounds::Sound> {
     let n = name.to_lowercase();
@@ -148,4 +189,18 @@ fn find_by_name<'a>(sounds: &'a [crate::db::sounds::Sound], name: &str) -> Optio
         let first = partial.next();
         if partial.next().is_some() { None } else { first }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_extension_origins_count() {
+        assert!(is_extension("chrome-extension://abcdefghijklmnop"));
+        assert!(is_extension("moz-extension://1234"));
+        for page in ["", "null", "https://evil.example", "http://127.0.0.1:7270", "https://chrome-extension.evil.com"] {
+            assert!(!is_extension(page), "{page}");
+        }
+    }
 }

@@ -1,0 +1,63 @@
+name: Extension
+
+# Packages the Chrome extension (extension/) on every change. Pushing a tag like ext-v1.0.0
+# (matching extension/manifest.json) also attaches the zip to a GitHub release and, once the
+# Chrome Web Store secrets exist, uploads it and submits it for review (docs/RELEASING.md).
+on:
+  push:
+    branches: [main]
+    paths: ["extension/**", ".github/workflows/extension.yml", "scripts/cws-publish.mjs"]
+    tags: ["ext-v*"]
+  pull_request:
+    paths: ["extension/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the manifest
+        run: |
+          v=$(node -p "require('./extension/manifest.json').version")
+          node -e "const m=require('./extension/manifest.json'); if (m.manifest_version!==3) throw new Error('MV3 required')"
+          for f in $(node -p "Object.values(require('./extension/manifest.json').icons).join(' ')"); do test -f "extension/$f"; done
+          if [[ "$GITHUB_REF" == refs/tags/ext-v* && "$GITHUB_REF_NAME" != "ext-v$v" ]]; then
+            echo "Tag $GITHUB_REF_NAME doesn't match manifest version $v"; exit 1
+          fi
+      - name: Zip
+        run: cd extension && zip -r ../blurt-extension.zip . -x '.*'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blurt-extension
+          path: blurt-extension.zip
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/ext-v')
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: blurt-extension
+      - name: Attach to a GitHub release (never marked latest, so the app's download link is unaffected)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" blurt-extension.zip --title "Send to Blurt (Chrome extension) ${GITHUB_REF_NAME#ext-}" --notes "Chrome extension package. Install it from the Chrome Web Store, or load it unpacked from this zip." --latest=false
+      - name: Publish to the Chrome Web Store
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+        run: |
+          if [ -z "$CWS_REFRESH_TOKEN" ] || [ -z "$CWS_PUBLISHER_ID" ] || [ -z "$CWS_EXTENSION_ID" ]; then
+            echo "::warning::Chrome Web Store secrets aren't all set yet, so the store upload was skipped (docs/RELEASING.md)."
+            exit 0
+          fi
+          node scripts/cws-publish.mjs blurt-extension.zip

@@ -208,6 +208,12 @@ pub fn hide_overlay(app: AppHandle) {
     crate::desktop::overlay::hide(&app);
 }
 
+/// The overlay was clicked or a slider moved: keep it open a little longer.
+#[tauri::command]
+pub fn overlay_activity(app: AppHandle) {
+    crate::desktop::overlay::touch(&app);
+}
+
 #[tauri::command]
 pub fn stop_all(state: Cmd) {
     state.engine.stop_all(true);
@@ -360,8 +366,8 @@ pub fn update_settings(app: AppHandle, state: Cmd, patch: serde_json::Value) -> 
         next.remote_token = uuid::Uuid::new_v4().simple().to_string()[..16].to_owned();
     }
     // Before saving: a busy port must leave the setting off rather than claim it's on.
-    if next.remote_control != prev.remote_control {
-        crate::desktop::remote::configure(&app, next.remote_control).map_err(AppError::Invalid)?;
+    if next.local_server() != prev.local_server() {
+        crate::desktop::remote::configure(&app, next.local_server()).map_err(AppError::Invalid)?;
     }
     next.save(&state.db)?;
     state.replace_settings(next.clone());
@@ -369,7 +375,7 @@ pub fn update_settings(app: AppHandle, state: Cmd, patch: serde_json::Value) -> 
     let v = &state.engine.volumes;
     v.master.set(next.master_volume);
     v.monitor.set(next.monitor_volume);
-    v.mic.set(next.mic_volume);
+    v.mic.set(next.mic_level());
     v.output.set(next.output_volume);
     crate::audio::mixer::MIC_DUCK.set(next.mic_duck_level());
     // Resolving the capture side enumerates devices, so only do it when routing actually changed
@@ -394,6 +400,8 @@ pub fn update_settings(app: AppHandle, state: Cmd, patch: serde_json::Value) -> 
         crate::desktop::ptt::set_held(None, false);
     }
     crate::desktop::apply_os_settings(&app, Some(&prev), &next).map_err(AppError::Invalid)?;
+    // The overlay and the main window each hold a copy.
+    let _ = app.emit("settings-changed", &next);
     Ok(next)
 }
 
@@ -475,7 +483,29 @@ struct DownloadProgress {
 
 #[tauri::command]
 pub fn start_download(app: AppHandle, state: Cmd, info: MediaInfoInput) -> AppResult<DownloadRecord> {
-    let bin = ytdlp_bin(&state)?;
+    begin_download(&app, &state, info)
+}
+
+/// The browser extension's "Send to Blurt": fetch the downloader if needed, read the video's
+/// details, then download it into Downloads, where the user trims and adds it.
+pub fn download_from_link(app: &AppHandle, state: &AppState, url: &str) -> AppResult<String> {
+    let tools = state.paths.tools_dir();
+    let bin = match ytdlp::locate(&tools) {
+        Some(b) => b,
+        None => ytdlp::install(&tools)?,
+    };
+    let info = Downloader::probe(&bin, url)?;
+    let title = info.title.clone();
+    let input = MediaInfoInput { url: info.url, title: Some(info.title), thumbnail: info.thumbnail, duration_ms: info.duration_ms };
+    let record = begin_download(app, state, input)?;
+    let _ = app.emit("download-started", &record);
+    crate::desktop::notify(app, "Downloading in Blurt", &format!("“{title}”: trim it and add it from Downloads."));
+    Ok(title)
+}
+
+fn begin_download(app: &AppHandle, state: &AppState, info: MediaInfoInput) -> AppResult<DownloadRecord> {
+    let app = app.clone();
+    let bin = ytdlp_bin(state)?;
     let (url, source) = sources::parse(&info.url)?;
     let id = uuid::Uuid::new_v4().to_string();
     let thumbnail = info.thumbnail.filter(|t| t.starts_with("https://"));

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0] - 2026-11-08
+
+- **Send to Blurt browser extension.** One click, a right-click or Alt+Shift+B on YouTube, TikTok, Instagram, X, SoundCloud, Reddit, Twitch or Vimeo sends the video to Blurt, which downloads it, ready to trim and add. It talks only to Blurt on your own PC: Blurt accepts it only from browser extensions, never from web pages. You can turn it off in Settings → Stream & game. The Chrome Web Store listing is coming soon.
+- **Overlay redesign.** A frosted-glass look made from a blurred snapshot of the game behind it, a playing-sound highlight with progress, and a bottom bar with your sound volume and mic level. In-game, press − and = for volume and M to mute your mic.
+- **Fixed:** the overlay didn't close (neither by itself nor with the shortcut) once it had been shown, because hiding a window that was shown without focus did nothing.
+- **Mute my mic** keeps your mic level, and the main window and overlay stay in sync when settings change in either.
+- **Privacy Policy and Terms of Service** on the website.
+
 ## [0.4.1] - 2026-11-07
 
 - **Repository and website:** the source is on GitHub, and the landing page links to it. Each release publishes its installer and checksums there.

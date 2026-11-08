@@ -65,6 +65,10 @@ pub struct Settings {
     /// Local HTTP control for Stream Deck, Touch Portal, Streamer.bot…
     pub remote_control: bool,
     pub remote_token: String,
+    /// Accept "Send to Blurt" from the browser extension (extension origins only).
+    pub browser_extension: bool,
+    /// Silences the passthrough mic without losing its level.
+    pub mic_muted: bool,
     // Interface
     pub grid_density: String,
     pub sort: String,
@@ -111,6 +115,8 @@ impl Default for Settings {
             clip_shortcut: Some("CommandOrControl+Alt+KeyC".into()),
             remote_control: false,
             remote_token: String::new(),
+            browser_extension: true,
+            mic_muted: false,
             grid_density: "comfortable".into(),
             sort: "manual".into(),
             sidebar_collapsed: false,
@@ -122,6 +128,15 @@ impl Default for Settings {
 const DUCK_LEVEL: f32 = 0.25;
 
 impl Settings {
+    pub fn mic_level(&self) -> f32 {
+        if self.mic_muted { 0.0 } else { self.mic_volume }
+    }
+
+    /// The local server runs for remote control or for the browser extension.
+    pub fn local_server(&self) -> bool {
+        self.remote_control || self.browser_extension
+    }
+
     pub fn mic_duck_level(&self) -> f32 {
         if self.duck_mic { DUCK_LEVEL } else { 1.0 }
     }

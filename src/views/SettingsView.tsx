@@ -498,6 +498,15 @@ function Stream() {
         )}
       </Section>
 
+      <Section title="Browser extension">
+        <Row
+          title="Allow “Send to Blurt” from Chrome"
+          description="With the Blurt extension, one click on a YouTube video (or TikTok, Instagram…) downloads it here, ready to trim and add. Only the extension can use this; websites can't."
+        >
+          <Toggle k="browserExtension" label="Browser extension" />
+        </Row>
+      </Section>
+
       <Section title="Stream Deck & remote control">
         <Row title="Allow Stream Deck, Touch Portal and Streamer.bot" description="Turns on a private link on this PC only (port 7270). Each link includes a secret key.">
           <Toggle k="remoteControl" label="Remote control" />

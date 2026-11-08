@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy Policy — Blurt</title>
+    <meta name="description" content="How the Blurt app and the Send to Blurt browser extension handle your data: everything stays on your computer." />
+    <link rel="icon" type="image/svg+xml" href="logo.svg" />
+    <link rel="stylesheet" href="legal.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <div class="wrap">
+        <a class="brand" href="./"><img src="logo.svg" width="28" height="28" alt="" />blurt</a>
+        <nav aria-label="Legal"><a href="./">Home</a><a href="privacy.html" aria-current="page">Privacy</a><a href="terms.html">Terms</a></nav>
+      </div>
+    </header>
+    <main class="wrap">
+      <h1>Privacy Policy</h1>
+      <p class="updated">Effective 8 November 2026. Applies to the Blurt desktop app, the “Send to Blurt” browser extension and this website.</p>
+
+      <div class="summary">
+        <p><strong>The short version:</strong> Blurt has no accounts, no analytics, no ads and no servers that collect anything. Your sounds, settings and recordings stay on your computer. The browser extension only sends the address of the page you choose to the Blurt app on that same computer.</p>
+      </div>
+
+      <h2>Who we are</h2>
+      <p>Blurt is an open-source project published at <a href="https://github.com/bloopdex/blurt">github.com/bloopdex/blurt</a> by its maintainer (“we”). Questions about this policy go to the <a href="https://github.com/bloopdex/blurt/issues">issue tracker</a>.</p>
+
+      <h2>The Blurt desktop app</h2>
+      <ul>
+        <li><strong>Stored on your computer only:</strong> your sound library, covers, categories, settings and keyboard shortcuts, in Blurt's data folder (on Windows, <code>%APPDATA%\app.blurt.desktop</code>). We never receive a copy.</li>
+        <li><strong>Microphone:</strong> if you turn on “Mix in my microphone”, Blurt processes your microphone in real time to send it to your virtual microphone. It is not recorded or stored.</li>
+        <li><strong>Instant clips:</strong> only if you turn this on, Blurt keeps the last few seconds of what your speakers or headset play in memory. Nothing is written to disk until you press the clip shortcut, and then only into your library. Turning it off clears the memory.</li>
+        <li><strong>Text to speech</strong> uses the voices built into your operating system. Your text is not sent anywhere.</li>
+        <li><strong>Local control server:</strong> Blurt listens on <code>127.0.0.1:7270</code>, an address only programs on your own computer can reach. Remote control (Stream Deck and similar) needs a secret key that Blurt shows you. The browser extension route only answers browser extensions.</li>
+      </ul>
+      <p>The app connects to the internet only when you ask it to:</p>
+      <table>
+        <tr><th>When</th><th>Connects to</th><th>What is sent</th></tr>
+        <tr><td>You download a sound from a link (in the app or through the extension)</td><td>The site in that link, for example YouTube, through the open-source tool yt-dlp</td><td>A normal request for that page and its media, as a browser would make</td></tr>
+        <tr><td>First link download</td><td>github.com, to fetch yt-dlp</td><td>A normal file download</td></tr>
+        <tr><td>You press “Set up my microphone” and need a virtual cable</td><td>vb-audio.com, to fetch VB-CABLE</td><td>A normal file download</td></tr>
+      </table>
+      <p>Those sites have their own privacy policies. Blurt does not check for updates, report crashes or send usage statistics.</p>
+
+      <h2>The “Send to Blurt” browser extension</h2>
+      <ul>
+        <li><strong>What it reads:</strong> the address (URL) and title of the current tab, or of the link you right-click, and only when you click “Send to Blurt”, use its right-click menu or press its shortcut.</li>
+        <li><strong>Where it goes:</strong> only to the Blurt app on your own computer, at <code>http://127.0.0.1:7270</code>. It is never sent to us or to anyone else.</li>
+        <li><strong>What it doesn't do:</strong> it doesn't read page content, track your browsing, store history, use cookies, run analytics or contact any remote server.</li>
+        <li><strong>Permissions:</strong> <code>activeTab</code> (read the current tab's address when you use the extension), <code>contextMenus</code> (the right-click item), and access to <code>http://127.0.0.1:7270/*</code> (to reach the Blurt app on your computer).</li>
+      </ul>
+      <p>The use of information received from Chrome APIs adheres to the <a href="https://developer.chrome.com/docs/webstore/program-policies/policies">Chrome Web Store User Data Policy</a>, including the Limited Use requirements. We don't sell or transfer user data, use it for anything unrelated to sending the page to Blurt, or use it to determine creditworthiness or for lending.</p>
+
+      <h2>This website</h2>
+      <p>This site is a static page hosted on GitHub Pages. It sets no cookies and loads no analytics or third-party scripts. Like any web host, GitHub may log technical data such as IP addresses to operate and secure its service. See <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</p>
+
+      <h2>Children</h2>
+      <p>Blurt doesn't knowingly collect data from anyone, including children, because it doesn't collect data at all.</p>
+
+      <h2>Changes</h2>
+      <p>If this policy changes, the new version will be posted here with a new effective date, and the history of this page is public in the repository.</p>
+    </main>
+    <footer>
+      <div class="wrap"><a href="./">Blurt</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="https://github.com/bloopdex/blurt">GitHub</a></div>
+    </footer>
+  </body>
+</html>

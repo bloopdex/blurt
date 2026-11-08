@@ -3,7 +3,7 @@ import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { engineStatusSchema, soundSchema, voiceSchema, type EngineStatus } from "./api";
+import { engineStatusSchema, settingsSchema, soundSchema, voiceSchema, type EngineStatus } from "./api";
 import { useApp } from "@/store/app";
 import { useLibrary } from "@/store/library";
 import { useDownloads } from "@/store/downloads";
@@ -55,6 +55,14 @@ export async function subscribe(onFileHover: (hovering: boolean) => void): Promi
     listen("download-progress", (e) => {
       const p = progressSchema.safeParse(e.payload);
       if (p.success) useDownloads.getState().setProgress(p.data.id, p.data.percent);
+    }),
+    listen("download-started", () => {
+      void useDownloads.getState().load();
+      toast.info("Downloading from your browser", { description: "Trim it and add it from Downloads." });
+    }),
+    listen("settings-changed", (e) => {
+      const s = settingsSchema.safeParse(e.payload);
+      if (s.success) useApp.setState({ settings: s.data });
     }),
     listen("download-finished", (e) => {
       if (typeof e.payload === "string") void useDownloads.getState().finished(e.payload);

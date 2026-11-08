@@ -69,6 +69,7 @@ pub fn run() {
             commands::text_to_speech,
             commands::tts_voices,
             commands::hide_overlay,
+            commands::overlay_activity,
             commands::install_virtual_cable,
             commands::set_paused,
             commands::get_voices,
@@ -130,7 +131,7 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let volumes = Volumes {
         master: Arc::new(AtomicF32::new(settings.master_volume)),
         monitor: Arc::new(AtomicF32::new(settings.monitor_volume)),
-        mic: Arc::new(AtomicF32::new(settings.mic_volume)),
+        mic: Arc::new(AtomicF32::new(settings.mic_level())),
         output: Arc::new(AtomicF32::new(settings.output_volume)),
     };
     audio::mixer::MIC_DUCK.set(settings.mic_duck_level());
@@ -140,11 +141,12 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 
     app.manage(AppState::new(db, paths, engine, settings.clone()));
     app.state::<AppState>().clips.configure(settings.clip_recording, settings.clip_seconds);
-    if settings.remote_control
+    if settings.local_server()
         && let Err(e) = desktop::remote::configure(app, true)
     {
         log::warn!("{e}");
     }
+    desktop::overlay::init(app);
     desktop::tray::create(app)?;
     desktop::shortcuts::sync(app);
     if let Err(e) = desktop::apply_os_settings(app, None, &settings) {

@@ -38,6 +38,27 @@ Silent install for testing or IT: `Blurt-Setup.exe /S` (needs an elevated prompt
 
 macOS is left out of releases until someone verifies a build on a Mac. Then add it back to the release matrix and set `macosAvailable: true` in `site/config.js`.
 
+## Browser extension ("Send to Blurt")
+
+The extension lives in `extension/` (Manifest V3, no build step). `.github/workflows/extension.yml` zips it on every change. Pushing a tag `ext-vX.Y.Z`, which must match `extension/manifest.json`, attaches `blurt-extension.zip` to a GitHub release that is never marked "latest", so the app's download link is unaffected. Then, if the store secrets exist, the workflow uploads the zip to the Chrome Web Store and submits it for review (`scripts/cws-publish.mjs`, Chrome Web Store API v2).
+
+**One-time setup (needs the paid developer account):**
+
+1. In the [developer dashboard](https://chrome.google.com/webstore/devconsole), create the item by uploading `blurt-extension.zip` by hand (the API can't create items). Fill the listing from `store/chrome/listing.md` and submit it.
+2. Copy the **item ID** (from the item's URL) and your **publisher ID** (Account page), then save them:
+   ```sh
+   gh secret set CWS_EXTENSION_ID -R bloopdex/blurt
+   gh secret set CWS_PUBLISHER_ID -R bloopdex/blurt
+   ```
+3. Create the refresh token by signing in with the account that owns the item:
+   ```sh
+   node scripts/cws-token.mjs path/to/client_secret_….json
+   ```
+   It saves `CWS_REFRESH_TOKEN` to the repository secrets without printing it. `CWS_CLIENT_ID` and `CWS_CLIENT_SECRET` are already set.
+4. In Google Cloud → *APIs & Services*, enable the **Chrome Web Store API**. On the *OAuth consent screen*, set the app to **In production**: refresh tokens of apps left in "Testing" expire after 7 days.
+
+**Each update:** bump `version` in `extension/manifest.json`, commit, then `git tag ext-vX.Y.Z && git push origin main ext-vX.Y.Z`.
+
 ## Release checklist
 
 - [ ] `pnpm typecheck && pnpm test && pnpm test:rust` green

@@ -28,7 +28,7 @@ enum Action {
 }
 
 /// Bare keys the overlay listens to. Registered only while it's open, since they'd block typing.
-const OVERLAY_KEYS: [(&str, Action); 21] = [
+const OVERLAY_KEYS: [(&str, Action); 26] = [
     ("Digit1", Action::OverlayKey(1)), ("Digit2", Action::OverlayKey(2)), ("Digit3", Action::OverlayKey(3)),
     ("Digit4", Action::OverlayKey(4)), ("Digit5", Action::OverlayKey(5)), ("Digit6", Action::OverlayKey(6)),
     ("Digit7", Action::OverlayKey(7)), ("Digit8", Action::OverlayKey(8)), ("Digit9", Action::OverlayKey(9)),
@@ -37,6 +37,10 @@ const OVERLAY_KEYS: [(&str, Action); 21] = [
     ("Numpad4", Action::OverlayKey(4)), ("Numpad5", Action::OverlayKey(5)), ("Numpad6", Action::OverlayKey(6)),
     ("Numpad7", Action::OverlayKey(7)), ("Numpad8", Action::OverlayKey(8)), ("Numpad9", Action::OverlayKey(9)),
     ("Numpad0", Action::OverlayKey(10)),
+    // 11/12 = sound volume down/up, 13 = mute or unmute the mic.
+    ("Minus", Action::OverlayKey(11)), ("Equal", Action::OverlayKey(12)),
+    ("NumpadSubtract", Action::OverlayKey(11)), ("NumpadAdd", Action::OverlayKey(12)),
+    ("KeyM", Action::OverlayKey(13)),
     ("Escape", Action::OverlayClose),
 ];
 
@@ -210,6 +214,7 @@ pub fn handle(app: &AppHandle, shortcut: &Shortcut, event: ShortcutEvent) {
         (Action::StopAll, ShortcutState::Pressed) => state.engine.stop_all(false),
         (Action::ToggleOverlay, ShortcutState::Pressed) => super::overlay::toggle(app),
         (Action::OverlayKey(n), ShortcutState::Pressed) => {
+            super::overlay::touch(app);
             let _ = app.emit_to(super::overlay::LABEL, "overlay-key", n);
         }
         (Action::OverlayClose, ShortcutState::Pressed) => super::overlay::hide(app),

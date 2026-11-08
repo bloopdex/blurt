@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Send to Blurt</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <img src="icons/32.png" width="22" height="22" alt="" />
+      <b>blurt</b>
+      <span id="status" class="status">Checking…</span>
+    </header>
+    <p id="page" class="page"></p>
+    <button id="send" type="button" disabled>Send to Blurt</button>
+    <p id="result" class="result" role="status"></p>
+    <footer>
+      Tip: right-click a video or link, or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>.
+      <a href="https://blurt.bloopdex.com/" target="_blank" rel="noopener">Get Blurt</a>
+    </footer>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

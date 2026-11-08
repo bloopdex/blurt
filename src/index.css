@@ -88,6 +88,13 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+@layer components {
+  /* Frosted buttons for the in-game overlay. */
+  .glass-btn {
+    @apply flex h-9 items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.06] px-3 text-sm font-medium text-white/90 transition-colors hover:bg-white/[0.12];
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
