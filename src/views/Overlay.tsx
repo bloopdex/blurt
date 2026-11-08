@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { Mic, MicOff, Pin, RotateCcw, Square, Star, Volume2, VolumeX } from "lucide-react";
+import { Mic, MicOff, Pin, RotateCcw, Square, Star, Volume2, VolumeX, X } from "lucide-react";
 
 import { LogoMark } from "@/components/Logo";
 import { EqBars } from "@/components/sounds/SoundCard";
@@ -122,13 +122,16 @@ export function Overlay() {
       <header className="relative flex items-center gap-2">
         <LogoMark className="size-6" />
         <span className="font-display text-base font-extrabold tracking-tight">blurt</span>
-        <span className="ml-2 rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] text-white/60">1–9 · 0 to play · closes by itself</span>
+        <span className="ml-2 rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] text-white/60">1–9 · 0 to play · Esc or the shortcut to close</span>
         <div className="ml-auto flex gap-2">
           <button type="button" onClick={() => (keepOpen(), void report("last sound", api.replayLast()))} className="glass-btn">
             <RotateCcw className="size-4" /> Replay
           </button>
           <button type="button" onClick={() => (keepOpen(), void api.stopAll())} className="glass-btn">
             <Square className="size-4" /> Stop
+          </button>
+          <button type="button" onClick={() => void api.hideOverlay()} className="glass-btn px-2.5" aria-label="Close overlay" title="Close (Esc)">
+            <X className="size-4" />
           </button>
         </div>
       </header>

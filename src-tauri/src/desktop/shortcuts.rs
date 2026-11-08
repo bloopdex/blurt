@@ -204,6 +204,14 @@ pub fn problems(state: &AppState) -> Vec<ShortcutProblem> {
     state.shortcuts.problems.lock().map(|p| p.clone()).unwrap_or_default()
 }
 
+/// The plugin holds its shortcut lock while it calls `handle`, and opening or closing the overlay
+/// (un)registers the overlay's keys, which takes that same lock. Run those once the handler has
+/// returned, or Blurt freezes with the overlay on screen.
+fn after_handler(app: &AppHandle, f: fn(&AppHandle)) {
+    let app = app.clone();
+    std::thread::spawn(move || f(&app));
+}
+
 /// Global hotkey callback (runs on the OS event thread; playback work is pushed off it).
 pub fn handle(app: &AppHandle, shortcut: &Shortcut, event: ShortcutEvent) {
     let state = app.state::<AppState>();
@@ -212,12 +220,12 @@ pub fn handle(app: &AppHandle, shortcut: &Shortcut, event: ShortcutEvent) {
     let Some(action) = action else { return };
     match (action, event.state) {
         (Action::StopAll, ShortcutState::Pressed) => state.engine.stop_all(false),
-        (Action::ToggleOverlay, ShortcutState::Pressed) => super::overlay::toggle(app),
+        (Action::ToggleOverlay, ShortcutState::Pressed) => after_handler(app, super::overlay::toggle),
         (Action::OverlayKey(n), ShortcutState::Pressed) => {
             super::overlay::touch(app);
             let _ = app.emit_to(super::overlay::LABEL, "overlay-key", n);
         }
-        (Action::OverlayClose, ShortcutState::Pressed) => super::overlay::hide(app),
+        (Action::OverlayClose, ShortcutState::Pressed) => after_handler(app, super::overlay::hide),
         (Action::SaveClip, ShortcutState::Pressed) => {
             let app = app.clone();
             std::thread::spawn(move || {

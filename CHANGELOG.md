@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.1] - 2026-11-08
+
+- **Fixed: the overlay froze Blurt.** Opening the overlay with its keyboard shortcut locked up the app, so neither Esc, the shortcut nor anything else could close it. It now closes with Esc, with the shortcut again, with the new **✕** button, or by itself after 4 seconds.
+
 ## [0.5.0] - 2026-11-08
 
 - **Send to Blurt browser extension.** One click, a right-click or Alt+Shift+B on YouTube, TikTok, Instagram, X, SoundCloud, Reddit, Twitch or Vimeo sends the video to Blurt, which downloads it, ready to trim and add. It talks only to Blurt on your own PC: Blurt accepts it only from browser extensions, never from web pages. You can turn it off in Settings → Stream & game. The Chrome Web Store listing is coming soon.
